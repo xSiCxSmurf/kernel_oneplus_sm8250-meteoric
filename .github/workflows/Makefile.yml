@@ -24,16 +24,5 @@ jobs:
       run: |
         echo "PATH=$HOME/toolchains/clang/bin:$PATH" >> $GITHUB_ENV
         echo "KERNEL_DIR=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-        echo "ARCH=arm64" >> $GITHUB_ENV
-        echo "SUBARCH=arm64" >> $GITHUB_ENV
-        echo "CROSS_COMPILE=aarch64-linux-gnu-" >> $GITHUB_ENV
-        echo "CROSS_COMPILE_ARM32=arm-linux-gnueabi-" >> $GITHUB_ENV
-
-    - name: Install build dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y build-essential bc curl git flex bison libssl-dev libncurses5-dev ccache python3 python3-distutils zip
-
-    - name: Setup toolchain
-      run:
-      
+        echo "ARCH=arm
+        

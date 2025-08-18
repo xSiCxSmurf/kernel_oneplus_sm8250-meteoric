@@ -45,56 +45,56 @@
         fi
         echo "$HOME/toolchains/mARkClang-17/bin" >> $GITHUB_PATH
 
-    - name: Make CI patch script (disable SELinux includes + small fixes)
-      run: |
-        cat > .github/ci_patch.sh <<'PATCH'
+  #  - name: Make CI patch script (disable SELinux includes + small fixes)
+     # run: |
+     #   cat > .github/ci_patch.sh <<'PATCH'
         #!/usr/bin/env bash
-        set -euo pipefail
-        echo "=== CI patch: disabling SELinux includes & patching KernelSU warnings ==="
+    #    set -euo pipefail
+      #  echo "=== CI patch: disabling SELinux includes & patching KernelSU warnings ==="
 
         # 1) Comment out any #include "flask.h" lines to avoid missing header errors
-        if [ -d security/selinux/include ]; then
-          find security/selinux/include -type f -name "*.h" -print0 | \
-            xargs -0 -n1 sed -i 's/#include "flask.h"/\/\* #include \"flask.h\" (disabled in CI) \*\//g' || true
-        fi
+       # if [ -d security/selinux/include ]; then
+    #      find security/selinux/include -type f -name "*.h" -print0 | \
+         #   xargs -0 -n1 sed -i 's/#include "flask.h"/\/\* #include \"flask.h\" (disabled in CI) \*\//g' || true
+     #   fi
 
         # 2) Patch KernelSU line MODULE_IMPORT_NS (comment it out for CI)
-        if [ -f kernel/ksu.c ]; then
-          sed -i 's/^[[:space:]]*MODULE_IMPORT_NS(.*);/\/\* MODULE_IMPORT_NS disabled in CI to avoid build error \*\/;/' kernel/ksu.c || true
-        fi
+      #  if [ -f kernel/ksu.c ]; then
+     #     sed -i 's/^[[:space:]]*MODULE_IMPORT_NS(.*);/\/\* MODULE_IMPORT_NS disabled in CI to avoid build error \*\/;/' kernel/ksu.c || true
+       # fi
 
         # 3) Fix mm/damon printk format
-        if [ -f mm/damon/paddr.c ]; then
-          sed -i 's/printk(\("[^"]*] reclaimed %lld pages\\n",[[:space:]]*applied\);/printk("[damon_reclaim] reclaimed %lu pages\\n", (unsigned long) applied);/' mm/damon/paddr.c || true
-        fi
+      #  if [ -f mm/damon/paddr.c ]; then
+       #   sed -i 's/printk(\("[^"]*] reclaimed %lld pages\\n",[[:space:]]*applied\);/printk("[damon_reclaim] reclaimed %lu pages\\n", (unsigned long) applied);/' mm/damon/paddr.c || true
+       # fi
 
         # 4) Fix misleading indentation in fs/crypto/policy.c by adding braces
-        if [ -f fs/crypto/policy.c ]; then
+       # if [ -f fs/crypto/policy.c ]; then
           # Only modify the specific pattern (safe-ish): replace single-line if-return with braced block
-          perl -0777 -pe 's/if\s*\(\s*!strcmp\(boot,\s*SDHCI\)\s*&&\s*!strcmp\(file_system_type,\s*"f2fs"\)\s*\)\s*\n\s*return 0\s*;/if (!strcmp(boot, SDHCI) && !strcmp(file_system_type, "f2fs")) { \n                    return 0; \n                }/s' -i fs/crypto/policy.c || true
-        fi
+    #      perl -0777 -pe 's/if\s*\(\s*!strcmp\(boot,\s*SDHCI\)\s*&&\s*!strcmp\(file_system_type,\s*"f2fs"\)\s*\)\s*\n\s*return 0\s*;/if (!strcmp(boot, SDHCI) && !strcmp(file_system_type, "f2fs")) { \n                    return 0; \n                }/s' -i fs/crypto/policy.c || true
+      #  fi
 
         # 5) As a safety: disable SECURITY_SELINUX in vendor defconfig (if present)
-        DEFCONF="arch/arm64/configs/vendor/meteoric_defconfig"
-        if [ -f "$DEFCONF" ]; then
-          sed -i 's/^CONFIG_SECURITY_SELINUX=y$/# CONFIG_SECURITY_SELINUX is not set/' "$DEFCONF" || true
-          sed -i 's/^CONFIG_SECURITY=y$/# CONFIG_SECURITY is not set/' "$DEFCONF" || true
-        fi
+     #   DEFCONF="arch/arm64/configs/vendor/meteoric_defconfig"
+    #    if [ -f "$DEFCONF" ]; then
+      #    sed -i 's/^CONFIG_SECURITY_SELINUX=y$/# CONFIG_SECURITY_SELINUX is not set/' "$DEFCONF" || true
+       #   sed -i 's/^CONFIG_SECURITY=y$/# CONFIG_SECURITY is not set/' "$DEFCONF" || true
+     #   fi
 
-        echo "=== CI patch script finished ==="
-        PATCH
-        chmod +x .github/ci_patch.sh
+     #   echo "=== CI patch script finished ==="
+     #   PATCH
+      #  chmod +x .github/ci_patch.sh
 
-    - name: Run CI patch script
-      run: |
-        ./.github/ci_patch.sh
+    #- name: Run CI patch script
+   #   run: |
+   #     ./.github/ci_patch.sh
         # show summary of applied changes (for logs)
-        git --no-pager diff --no-prefix | sed -n '1,200p' || true
+     #   git --no-pager diff --no-prefix | sed -n '1,200p' || true
 
-    - name: Ensure submodules up-to-date (after any modifications)
-      run: |
-        git submodule sync --recursive || true
-        git submodule update --init --recursive --depth=1 || true
+   # - name: Ensure submodules up-to-date (after any modifications)
+    #  run: |
+    #    git submodule sync --recursive || true
+      #  git submodule update --init --recursive --depth=1 || true
 
     - name: Prepare kernel defconfig
       working-directory: ${{ github.workspace }}
